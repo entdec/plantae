@@ -26,13 +26,13 @@ module Plantae
       # Define code to execute on create, this is used to create
       # preconditions before running any scenarios.
       def create(*args, &block)
-        set_callback(:create, :after, *args, &block)
+        set_callback(:create, :before, *args, &block)
       end
 
       # Define code to execute on destroy, this is used to clean up
       # the items created through the seeder.
       def destroy(*args, &block)
-        set_callback(:destroy, :after, *args, &block)
+        set_callback(:destroy, :before, *args, &block)
       end
     end
 
