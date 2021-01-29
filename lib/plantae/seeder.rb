@@ -13,6 +13,27 @@ module Plantae
     class << self
       attr_reader :scenarios
 
+      # Run the given methods with the ActiveJob inline adapter temporarily enabled
+      def with_inline_jobs(*names)
+        names.each do |name|
+          m = instance_method(name)
+
+          define_method(name) do |*args|
+            old_queue_adapter = ActiveJob::Base.queue_adapter
+            ActiveJob::Base.queue_adapter = ActiveJob::QueueAdapters::InlineAdapter.new
+
+            m.bind(self).call(*args)
+          ensure
+            ActiveJob::Base.queue_adapter = old_queue_adapter
+          end
+        end
+      end
+
+      # Run all public instance methos with the with_inline_jobs method
+      def all_public_methods_with_inline_jobs
+        with_inline_jobs(*public_instance_methods(false))
+      end
+
       # Create scenarios in your seeder using the following format:
       #
       #   scenario "this is my scenario" do
