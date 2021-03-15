@@ -2,6 +2,7 @@
 
 require_relative 'scenario'
 require 'active_support/callbacks'
+require 'active_support/core_ext/module/delegation'
 
 module Plantae
   # Extend this class to create your own seeders
@@ -11,8 +12,6 @@ module Plantae
     delegate :scenarios, to: :class
 
     class << self
-      attr_reader :scenarios
-
       # Run the given methods with the ActiveJob inline adapter temporarily enabled
       def with_inline_jobs(*names)
         names.each do |name|
@@ -32,6 +31,10 @@ module Plantae
       # Run all public instance methos with the with_inline_jobs method
       def all_public_methods_with_inline_jobs
         with_inline_jobs(*public_instance_methods(false))
+      end
+
+      def scenarios
+        @scenarios || []
       end
 
       # Create scenarios in your seeder using the following format:
