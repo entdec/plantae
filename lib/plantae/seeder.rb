@@ -3,6 +3,7 @@
 require_relative 'scenario'
 require 'active_support/callbacks'
 require 'active_support/core_ext/module/delegation'
+require_relative 'active_job_adapter'
 
 module Plantae
   # Extend this class to create your own seeders
@@ -19,7 +20,7 @@ module Plantae
 
           define_method(name) do |*args|
             old_queue_adapter = ActiveJob::Base.queue_adapter
-            ActiveJob::Base.queue_adapter = ActiveJob::QueueAdapters::InlineAdapter.new
+            ActiveJob::Base.queue_adapter = ActiveJobAdapter.new
 
             m.bind(self).call(*args)
           ensure
