@@ -17,14 +17,31 @@ module Plantae
       def with_inline_jobs(*names)
         names.each do |name|
           m = instance_method(name)
+          @@semaphore ||= Mutex.new
+          @@in_mutex ||= false
 
           define_method(name) do |*args|
-            old_queue_adapter = ActiveJob::Base.queue_adapter
-            ActiveJob::Base.queue_adapter = ActiveJobAdapter.new
+            the_code = proc do
+              old_queue_adapter = ActiveJob::Base.queue_adapter
+              ActiveJob::Base.queue_adapter = ActiveJobAdapter.new
 
-            m.bind(self).call(*args)
-          ensure
-            ActiveJob::Base.queue_adapter = old_queue_adapter
+              m.bind(self).call(*args)
+            ensure
+              ActiveJob::Base.queue_adapter = old_queue_adapter
+            end
+
+            if @@in_mutex
+              result = the_code.call
+            else
+              @@semaphore.synchronize do
+                @@in_mutex = true
+                result = the_code.call
+              ensure
+                @@in_mutex = false
+              end
+            end
+
+            result
           end
         end
       end
