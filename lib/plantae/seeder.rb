@@ -20,12 +20,20 @@ module Plantae
           @@semaphore ||= Mutex.new
           @@in_mutex ||= false
 
-          define_method(name) do |*args, **kwargs|
+          only_kwargs = m.parameters.count.positive? && m.parameters.all? { |i| i.first == :key }
+
+          the_new_method = proc do |*args|
             the_code = proc do
               old_queue_adapter = ActiveJob::Base.queue_adapter
               ActiveJob::Base.queue_adapter = ActiveJobAdapter.new
 
-              m.bind(self).call(*args, **kwargs)
+              kwargs = args.last.is_a?(Hash) ? args.pop : {}
+
+              if only_kwargs
+                m.bind(self).call(**kwargs)
+              else
+                m.bind(self).call(*args, **kwargs)
+              end
             ensure
               ActiveJob::Base.queue_adapter = old_queue_adapter
             end
@@ -43,6 +51,8 @@ module Plantae
 
             result
           end
+
+          define_method(name, the_new_method)
         end
       end
 
