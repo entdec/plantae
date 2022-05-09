@@ -20,12 +20,12 @@ module Plantae
           @@semaphore ||= Mutex.new
           @@in_mutex ||= false
 
-          define_method(name) do |*args|
+          define_method(name) do |*args, **kwargs|
             the_code = proc do
               old_queue_adapter = ActiveJob::Base.queue_adapter
               ActiveJob::Base.queue_adapter = ActiveJobAdapter.new
 
-              m.bind(self).call(*args)
+              m.bind(self).call(*args, **kwargs)
             ensure
               ActiveJob::Base.queue_adapter = old_queue_adapter
             end
